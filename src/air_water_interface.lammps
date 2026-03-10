@@ -1,0 +1,137 @@
+# ============================================================
+# LAMMPS Input Script: Air-Water Interface Simulation
+# Model: SPC/E Water  |  Batch 2
+# Improvements: tighter lattice, multi-phase protocol,
+#   separated data collection, correct density
+# Kspace: Ewald (avoids macOS ARM FFTW segfault)
+# ============================================================
+
+# ---------- Initialization ----------
+units           real
+atom_style      full
+boundary        p p p
+
+# ---------- Force Field ----------
+pair_style      lj/cut/coul/long 10.0
+bond_style      harmonic
+angle_style     harmonic
+kspace_style    ewald 1.0e-4
+
+# ---------- Create Simulation Box ----------
+# Box: 30 x 30 x 120 Angstroms (elongated in z for vacuum/air slabs)
+region          simbox block 0.0 30.0 0.0 30.0 0.0 120.0
+create_box      2 simbox bond/types 1 angle/types 1 &
+                extra/bond/per/atom 2 extra/angle/per/atom 1 extra/special/per/atom 2
+
+# ---------- Force Field Parameters ----------
+# Atom types: 1 = Oxygen (OW), 2 = Hydrogen (HW)
+mass            1 15.9994   # Oxygen
+mass            2  1.00794  # Hydrogen
+
+# SPC/E Lennard-Jones parameters
+pair_coeff      1 1 0.1553 3.166   # O-O
+pair_coeff      2 2 0.0    0.0     # H-H (no LJ)
+pair_coeff      1 2 0.0    0.0     # O-H (no LJ)
+
+# SPC/E bond and angle parameters
+bond_coeff      1 600.0 1.0        # O-H bond (constrained via SHAKE)
+angle_coeff     1 75.0 109.47      # H-O-H angle (constrained via SHAKE)
+
+# ---------- Create Water Molecules ----------
+molecule        watmol water.mol
+
+# Tighter lattice (3.1 A) for near-bulk density (~1.0 g/cm³)
+# Safe now — Ewald doesn't trigger FFTW crash
+region          waterbox block 0.5 29.5 0.5 29.5 30.0 90.0
+lattice         sc 3.1
+create_atoms    0 region waterbox mol watmol 12345
+
+# ---------- Groups ----------
+group           oxygen type 1
+group           hydrogen type 2
+group           water type 1 2
+
+# ---------- Settings ----------
+fix             fSHAKE water shake 1.0e-4 100 0 b 1 a 1
+
+# ---------- Neighbor List ----------
+neighbor        2.0 bin
+neigh_modify    every 1 delay 0 check yes
+
+# ============================================================
+# PHASE 1: Energy Minimization
+# ============================================================
+thermo_style    custom step temp pe ke etotal press vol density
+thermo          200
+minimize        1.0e-4 1.0e-6 1000 10000
+
+# ---------- Initial Velocities ----------
+velocity        water create 100.0 87287 dist gaussian
+
+# ============================================================
+# PHASE 2: NVT Heating (100 K → 300 K over 10 ps)
+#   Gently ramp temperature to avoid shocking the structure
+# ============================================================
+fix             nvt_heat water nvt temp 100.0 300.0 100.0
+timestep        1.0
+
+thermo_style    custom step temp pe ke etotal press density
+thermo          500
+
+# Dump equilibration trajectory (lower frequency, just for monitoring)
+dump            eq_traj all custom 2000 output/batch.2/equil_trajectory.lammpstrj id type x y z
+
+run             10000
+unfix           nvt_heat
+
+# ============================================================
+# PHASE 3: NVT Equilibration (300 K, 40 ps)
+#   Let the slab fully relax at target temperature
+# ============================================================
+fix             nvt_eq water nvt temp 300.0 300.0 100.0
+
+thermo          500
+run             40000
+unfix           nvt_eq
+
+# Stop equilibration dump
+undump          eq_traj
+
+# ============================================================
+# PHASE 4: Production Run (NVT, 300 K, 200 ps)
+#   Data collection starts HERE — after full equilibration
+# ============================================================
+fix             nvt_prod water nvt temp 300.0 300.0 100.0
+
+# --- Density profile along z-axis ---
+compute         chunks water chunk/atom bin/1d z lower 0.5
+fix             density_profile water ave/chunk 100 50 5000 chunks density/mass &
+                file output/batch.2/density_profile.dat
+
+# --- Trajectory dump ---
+dump            traj all custom 1000 output/batch.2/trajectory.lammpstrj id type x y z vx vy vz
+
+# --- Surface tension via pressure tensor ---
+variable        Lz equal lz
+variable        pxx equal pxx
+variable        pyy equal pyy
+variable        pzz equal pzz
+# Raw in atm·Å; multiply by 0.101325 to get mN/m
+variable        surftens equal 0.5*v_Lz*(v_pzz-0.5*(v_pxx+v_pyy))
+variable        surftens_mNm equal v_surftens*0.101325
+fix             st_avg all ave/time 100 50 5000 v_surftens v_surftens_mNm &
+                file output/batch.2/surface_tension.dat
+
+# --- Thermo ---
+thermo_style    custom step temp pe ke etotal press v_surftens v_surftens_mNm density
+thermo          1000
+
+# TEST RUN: 10000 steps (10 ps production)
+# For final production: increase to 200000 (200 ps) or more
+run             10000
+
+# ---------- Final Output ----------
+write_data      output/batch.2/final_config.data
+write_restart   output/batch.2/restart.equil
+
+print           "=== Batch 2: Air-Water Interface Simulation Complete ==="

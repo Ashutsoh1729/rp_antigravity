@@ -1,0 +1,116 @@
+# ============================================================
+# BATCH 3 — Variant A: Ewald + SPC/E + Slab Correction
+# TEST RUN — short steps for validation only
+# Output: src/test/output/variant_a/
+# ============================================================
+
+# ---------- Initialization ----------
+units           real
+atom_style      full
+boundary        p p f              # Slab correction requires non-periodic z
+
+# ---------- Force Field ----------
+pair_style      lj/cut/coul/long 10.0
+bond_style      harmonic
+angle_style     harmonic
+kspace_style    ewald 1.0e-4
+kspace_modify   slab 3.0          # Yeh-Berkowitz correction for slab geometry
+
+# ---------- Create Simulation Box ----------
+region          simbox block 0.0 30.0 0.0 30.0 0.0 120.0
+create_box      2 simbox bond/types 1 angle/types 1 &
+                extra/bond/per/atom 2 extra/angle/per/atom 1 extra/special/per/atom 2
+
+# ---------- Force Field Parameters ----------
+mass            1 15.9994   # Oxygen
+mass            2  1.00794  # Hydrogen
+
+# SPC/E parameters
+pair_coeff      1 1 0.1553 3.166   # O-O
+pair_coeff      2 2 0.0    0.0     # H-H
+pair_coeff      1 2 0.0    0.0     # O-H
+pair_modify     tail yes           # LJ long-range tail correction
+
+bond_coeff      1 600.0 1.0
+angle_coeff     1 75.0 109.47
+
+# ---------- Create Water Slab ----------
+molecule        watmol ../water.mol
+region          waterbox block 0.5 29.5 0.5 29.5 30.0 90.0
+lattice         sc 3.1
+create_atoms    0 region waterbox mol watmol 12345
+
+# ---------- Groups ----------
+group           oxygen type 1
+group           hydrogen type 2
+group           water type 1 2
+
+# ---------- Constraints ----------
+fix             fSHAKE water shake 1.0e-4 100 0 b 1 a 1
+
+# ---------- Neighbor ----------
+neighbor        2.0 bin
+neigh_modify    every 1 delay 0 check yes
+
+# ============================================================
+# PHASE 1: Minimize
+# ============================================================
+thermo_style    custom step temp pe ke etotal press vol density
+thermo          200
+minimize        1.0e-4 1.0e-6 500 5000
+
+# ============================================================
+# PHASE 2: Heat (100 → 300 K, 5 ps)
+# ============================================================
+velocity        water create 100.0 87287 dist gaussian
+fix             nvt_heat water nvt temp 100.0 300.0 100.0
+timestep        1.0
+thermo_style    custom step temp pe ke etotal press density
+thermo          500
+run             5000
+unfix           nvt_heat
+
+# ============================================================
+# PHASE 3: Equilibrate (300 K, 10 ps)
+# ============================================================
+fix             nvt_eq water nvt temp 300.0 300.0 100.0
+thermo          500
+run             10000
+unfix           nvt_eq
+
+# ============================================================
+# PHASE 4: Production (300 K, 10 ps)
+#   Short test — just enough to validate slab correction
+# ============================================================
+fix             nvt_prod water nvt temp 300.0 300.0 100.0
+
+# Density profile
+compute         chunks water chunk/atom bin/1d z lower 0.5
+fix             density_profile water ave/chunk 50 20 1000 chunks density/mass &
+                file output/variant_a/density_profile.dat
+
+# Surface tension
+variable        Lz equal lz
+variable        pxx equal pxx
+variable        pyy equal pyy
+variable        pzz equal pzz
+variable        surftens equal 0.5*v_Lz*(v_pzz-0.5*(v_pxx+v_pyy))
+variable        surftens_mNm equal v_surftens*0.101325
+fix             st_avg all ave/time 50 20 1000 v_surftens v_surftens_mNm &
+                file output/variant_a/surface_tension.dat
+
+# Trajectory
+dump            traj all custom 2000 output/variant_a/trajectory.lammpstrj id type x y z
+
+# Thermo
+thermo_style    custom step temp pe ke etotal press v_surftens v_surftens_mNm density
+thermo          1000
+
+# TEST: 10000 steps (10 ps)
+run             10000
+
+# ---------- Save ----------
+write_data      output/variant_a/final_config.data
+write_restart   output/variant_a/restart.equil
+
+print "=== Variant A (Ewald + slab correction) Complete ==="

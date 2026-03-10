@@ -1,0 +1,165 @@
+# =============================================================================
+# LAMMPS INPUT SCRIPT: Air-Water Interface (TIP4P/2005) - Variant D
+# 
+# Inspired by `src/pfas/pfoa_in_water.lammps`.
+# Simulates ONLY the air-water interface (pure water slab in vacuum).
+# =============================================================================
+
+# SIMULATION DECISION: Use 'real' units, full atom style
+units real
+atom_style full
+
+# Initialize with p p p boundary for correct volume equilibration.
+# We will switch to p p f later.
+boundary p p p
+dimension 3
+
+bond_style      harmonic
+angle_style     harmonic
+
+# =============================================================================
+# ATOM DEFINITION
+# =============================================================================
+
+# Load single water molecule data file (no extra molecule topology allocated)
+read_data 1H2O.data
+
+# Replicate 12x12x12 to get a bulk-density water box (~1728 molecules). 
+replicate 12 12 12
+
+# Note: We do NOT extend the box yet. 
+# We need it to collapse to liquid density first.
+
+# =============================================================================
+# SETTINGS
+# =============================================================================
+
+group water type 1 2
+
+mass 1 15.9994   # O  (TIP4P/2005 water oxygen)
+mass 2  1.0079   # H  (TIP4P/2005 water hydrogen)
+
+# =============================================================================
+# FORCE FIELD
+# =============================================================================
+
+# TIP4P specifically requires the tip4p/long pair style to project the oxygen charge to the M site
+# arguments: O-type H-type OH-bond-type HOH-angle-type OM-distance cutoff
+pair_style lj/cut/tip4p/long 1 2 1 1 0.1546 12.0
+
+# Standard pppm/tip4p initially (no slab correction for p p p)
+kspace_style pppm/tip4p 1.0e-4
+
+pair_coeff 1 1 0.18520 3.1589   # O-O  TIP4P/2005
+pair_coeff 2 2 0.0000  0.0000   # H-H  (no LJ)
+pair_coeff 1 2 0.0     0.0      # O-H  cross
+
+pair_modify tail no
+pair_modify mix geometric
+
+# Force constants = 0 for water bonds/angles.
+# TIP4P geometry maintained by SHAKE.
+bond_coeff  1 0.0 0.9572    # O-H  (SHAKE reference, spring inactive)
+angle_coeff 1 0.0 104.52    # H-O-H (SHAKE reference, spring inactive)
+
+# =============================================================================
+# EQUILIBRATION (NPT - Volume adjustment)
+# =============================================================================
+
+# SHAKE on water bond type 1 and angle type 1.
+# Enforces rigid TIP4P/2005 geometry.
+fix constrain water shake 1.0e-4 100 0 b 1 a 1
+
+reset_timestep 0
+timestep 1.0
+
+velocity all create 300.0 12345 dist gaussian loop geom
+
+# Short NPT at 300K, 1 atm to let the replicated box shrink to liquid density (~0.998 g/cm3)
+fix equilibrate all npt temp 300.0 300.0 100.0 iso 1.0 1.0 1000.0
+
+thermo 1000
+thermo_style custom step temp pe ke etotal press density vol
+
+# Run 20 ps (20,000 steps) for volume relaxation
+run 20000
+
+unfix equilibrate
+
+# =============================================================================
+# SETUP FOR INTERFACE (Create Vacuum)
+# =============================================================================
+
+# Changing boundaries with PPPM active can cause segfaults.
+# Temporarily disable kspace
+kspace_style none
+
+# Change boundary to fixed in Z
+change_box all boundary p p f
+
+# Extend z to 250 Angstroms to create a vacuum gap
+change_box all z final 0 250.0 units box
+
+# Re-enable PPPM/TIP4P and turn on slab correction for p p f boundary
+kspace_style pppm/tip4p 1.0e-4
+kspace_modify slab 3.0
+
+# Re-establish pair coeffs just in case kspace_style none cleared them internally
+pair_style lj/cut/tip4p/long 1 2 1 1 0.1546 12.0
+pair_coeff 1 1 0.18520 3.1589   # O-O  TIP4P/2005
+pair_coeff 2 2 0.0000  0.0000   # H-H  (no LJ)
+pair_coeff 1 2 0.0     0.0      # O-H  cross
+
+# =============================================================================
+# PRODUCTION (NVT)
+# =============================================================================
+
+reset_timestep 0
+
+# Walls active throughout production run.
+# Prevents stray water molecules from evaporating into vacuum.
+# Wall placed at boundaries with weak LJ93.
+fix walls all wall/lj93 zlo 0.0 0.1 3.0 3.37 zhi 250.0 0.1 3.0 3.37
+
+# NVT at 300K using Nose-Hoover thermostat.
+fix thermostat all nvt temp 300.0 300.0 100.0
+
+# =============================================================================
+# OUTPUT
+# =============================================================================
+
+thermo 1000
+thermo_style custom step temp pe ke etotal press density
+
+# Store image flags for unwrapped coordinates
+dump traj all custom 5000 output/variant_d/trajectory.lammpstrj &
+     id type mol x y z ix iy iz
+dump_modify traj sort id
+
+# z-axis density profile (bin = 1.0 A) — shows water slab edges
+compute chunks all chunk/atom bin/1d z lower 1.0 units box
+fix density_profile all ave/chunk 10 100 1000 chunks density/mass &
+    file output/variant_d/density_profile.dat
+
+# Total energy tracking — confirm equilibration plateau
+variable tot_eng equal etotal
+fix track_energy all ave/time 10 100 1000 v_tot_eng &
+    file output/variant_d/energy_stability.dat
+
+# Surface Tension calculation
+variable        Lz equal lz
+variable        pxx equal pxx
+variable        pyy equal pyy
+variable        pzz equal pzz
+variable        surftens equal 0.5*v_Lz*(v_pzz-0.5*(v_pxx+v_pyy))
+variable        surftens_mNm equal v_surftens*0.101325
+fix             st_avg all ave/time 10 100 1000 v_surftens v_surftens_mNm &
+                file output/variant_d/surface_tension.dat
+
+# 100,000 steps x 1.0 fs = 100 ps production run.
+run 100000
+
+print "========================================================="
+print " Air-Water Interface Run Complete (Variant D)"
+print " Check output/variant_d/density_profile.dat"
+print "========================================================="

@@ -1,0 +1,272 @@
+LAMMPS (22 Jul 2025)
+Reading data file ...
+  orthogonal box = (0 0 0) to (3.106 3.106 3.106)
+  1 by 1 by 7 MPI processor grid
+  reading atoms ...
+  3 atoms
+  scanning bonds ...
+  2 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  orthogonal box = (0 0 0) to (3.106 3.106 3.106)
+  1 by 1 by 7 MPI processor grid
+  reading bonds ...
+  2 bonds
+  reading angles ...
+  1 angles
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     2 = max # of 1-2 neighbors
+     1 = max # of 1-3 neighbors
+     1 = max # of 1-4 neighbors
+     2 = max # of special neighbors
+  special bonds CPU = 0.002 seconds
+  read_data CPU = 0.011 seconds
+Replication is creating a 9x9x9 = 729 times larger system...
+  orthogonal box = (0 0 0) to (27.954 27.954 27.954)
+  7 by 1 by 1 MPI processor grid
+  2187 atoms
+  1458 bonds
+  729 angles
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     2 = max # of 1-2 neighbors
+     1 = max # of 1-3 neighbors
+     1 = max # of 1-4 neighbors
+     2 = max # of special neighbors
+  special bonds CPU = 0.002 seconds
+  replicate CPU = 0.004 seconds
+Changing box ...
+  orthogonal box = (0 0 0) to (27.954 27.954 85)
+2187 atoms in group gH2O
+729 atoms in group oxygen
+Finding SHAKE clusters ...
+       0 = # of size 2 clusters
+       0 = # of size 3 clusters
+       0 = # of size 4 clusters
+     729 = # of frozen angles
+  find clusters CPU = 0.001 seconds
+PPPM initialization ...
+  extracting TIP4P info from pair style
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.22145376
+  grid = 15 15 30
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.029325477
+  estimated relative force accuracy = 8.8312802e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 7326 1350
+WARNING: Communication cutoff 0 is shorter than a bond length based estimate of 4.4358. This may lead to errors. (src/comm.cpp:743)
+WARNING: Increasing communication cutoff to 16.1118 for TIP4P pair style (src/KSPACE/pair_lj_cut_tip4p_long.cpp:497)
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 15.3092
+  ghost atom cutoff = 16.1118
+  binsize = 7.6546, bins = 4 4 12
+  2 neighbor lists, perpetual/occasional/extra = 1 1 0
+  (1) pair lj/cut/tip4p/long, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+  (2) compute rdf, occasional, copy from (1)
+      attributes: half, newton on
+      pair build: copy
+      stencil: none
+      bin: none
+Setting up Verlet run ...
+  Unit style    : real
+  Current step  : 0
+  Time step     : 1
+Per MPI rank memory allocation (min/avg/max) = 10.19 | 10.22 | 10.24 Mbytes
+   Step          Temp          PotEng         KinEng         TotEng         Press        v_surftens   v_surftens_mNm v_density_sys 
+         0   447.32732      362.18655      1942.7605      2304.9471      9288.0364     -37572.74      -3807.0579      0.32833639   
+      5000   293.93921     -9753.565       1276.5898     -8476.9752     -22.423172      28282.112      2865.6849      0.32833639   
+     10000   302.13491     -9932.0054      1312.1841     -8619.8213     -297.02695      3348.4811      339.28485      0.32833639   
+     15000   299.64073     -9920.0014      1301.3518     -8618.6497     -40.301815      15301.559      1550.4305      0.32833639   
+     20000   305.3655      -9849.0159      1326.2147     -8522.8012      51.845109      17281.017      1750.9991      0.32833639   
+     25000   302.97285     -9952.1302      1315.8233     -8636.3069     -232.49191     -52.750379     -5.3449321      0.32833639   
+     30000   304.2978      -9881.1281      1321.5776     -8559.5505     -181.35804     -9151.069      -927.23207      0.32833639   
+     35000   305.74411     -9938.1365      1327.859      -8610.2776     -93.393268      9042.6392      916.24542      0.32833639   
+     40000   298.19174     -9827.9235      1295.0587     -8532.8648     -149.95354      22947.602      2325.1658      0.32833639   
+     45000   302.11792     -9870.3577      1312.1103     -8558.2474     -119.67936      5142.7884      521.09304      0.32833639   
+     50000   289.06859     -9889.5182      1255.4365     -8634.0817      283.21945     -4414.223      -447.27115      0.32833639   
+     55000   295.32753     -9847.3817      1282.6193     -8564.7624     -30.210691      6608.2018      669.57604      0.32833639   
+     60000   299.18029     -9938.1052      1299.352      -8638.7532     -361.24225      4248.0042      430.42902      0.32833639   
+     65000   297.85034     -9978.8367      1293.576      -8685.2607     -18.101405     -8596.9259     -871.08351      0.32833639   
+     70000   303.94839     -9960.2298      1320.0601     -8640.1697     -117.56227      20651.618      2092.5252      0.32833639   
+     75000   301.96011     -9975.7094      1311.4249     -8664.2845     -204.69201      12067.231      1222.7121      0.32833639   
+     80000   305.04799     -9967.8193      1324.8357     -8642.9836     -2.8597706      10298.512      1043.4968      0.32833639   
+     85000   290.57577     -9938.1407      1261.9823     -8676.1585      381.36762      6169.3417      625.10854      0.32833639   
+     90000   309.56454     -9869.7613      1344.4513     -8525.31       -426.49597      6396.2179      648.09678      0.32833639   
+     95000   301.41557     -9903.3719      1309.0599     -8594.312       317.70564     -11131.396     -1127.8887      0.32833639   
+    100000   298.26282     -10043.975      1295.3674     -8748.608      -57.097072      15639.782      1584.7009      0.32833639   
+    105000   300.54105     -10031.077      1305.2619     -8725.8152     -221.71423      5202.801       527.17381      0.32833639   
+    110000   299.48824     -9996.7324      1300.6895     -8696.0429     -109.54055      3275.3136      331.87115      0.32833639   
+    115000   294.92205     -9962.6413      1280.8583     -8681.783      -423.9631       14705.895      1490.0749      0.32833639   
+    120000   293.87428     -9960.7747      1276.3078     -8684.4669     -160.67226      7729.5786      783.19955      0.32833639   
+    125000   292.59482     -9951.9508      1270.7511     -8681.1997     -309.22967     -2086.458      -211.41036      0.32833639   
+    130000   298.58786     -10024.534      1296.7791     -8727.7551     -226.66499      6803.3277      689.34718      0.32833639   
+    135000   288.89038     -9976.6062      1254.6625     -8721.9436      11.120077      8480.9946      859.33678      0.32833639   
+    140000   297.16791     -9929.8933      1290.6122     -8639.2812     -500.20706      13397.649      1357.5168      0.32833639   
+    145000   298.34386     -9975.4885      1295.7194     -8679.7691      313.72755      2481.3399      251.42176      0.32833639   
+    150000   303.86286     -10019.073      1319.6886     -8699.3845      21.383196     -4907.212      -497.22326      0.32833639   
+Loop time of 1492.08 on 7 procs for 150000 steps with 2187 atoms
+
+Performance: 8.686 ns/day, 2.763 hours/ns, 100.531 timesteps/s, 219.861 katom-step/s
+96.2% CPU use with 7 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1049.6     | 1096.5     | 1163.8     | 108.9 | 73.49
+Bond    | 0.11972    | 0.13586    | 0.15103    |   3.0 |  0.01
+Kspace  | 217.6      | 283.73     | 330.66     | 211.9 | 19.02
+Neigh   | 27.882     | 27.894     | 27.911     |   0.2 |  1.87
+Comm    | 42.386     | 43.72      | 46.239     |  18.1 |  2.93
+Output  | 0.05703    | 0.061056   | 0.063982   |   1.1 |  0.00
+Modify  | 36.447     | 36.596     | 36.948     |   2.8 |  2.45
+Other   |            | 3.429      |            |       |  0.23
+
+Nlocal:        312.429 ave         327 max         302 min
+Histogram: 1 1 1 0 2 0 1 0 0 1
+Nghost:        9255.43 ave        9351 max        9160 min
+Histogram: 1 2 0 0 0 1 1 0 0 2
+Neighs:         184293 ave      200844 max      173366 min
+Histogram: 1 1 1 1 0 1 1 0 0 1
+
+Total # of neighbors = 1290048
+Ave neighs/atom = 589.87106
+Ave special neighs/atom = 2
+Neighbor list builds = 2686
+Dangerous builds = 0
+System init for write_data ...
+PPPM initialization ...
+  extracting TIP4P info from pair style
+[Ashutoshs-MacBook-Air:93669] *** Process received signal ***
+[Ashutoshs-MacBook-Air:93669] Signal: Segmentation fault: 11 (11)
+[Ashutoshs-MacBook-Air:93669] Signal code: Invalid permissions (2)
+[Ashutoshs-MacBook-Air:93669] Failing at address: 0x10
+[Ashutoshs-MacBook-Air:93666] *** Process received signal ***
+[Ashutoshs-MacBook-Air:93666] Signal: Segmentation fault: 11 (11)
+[Ashutoshs-MacBook-Air:93666] Signal code: Invalid permissions (2)
+[Ashutoshs-MacBook-Air:93666] Failing at address: 0x10
+[Ashutoshs-MacBook-Air:93665] *** Process received signal ***
+[Ashutoshs-MacBook-Air:93665] Signal: Segmentation fault: 11 (11)
+[Ashutoshs-MacBook-Air:93665] Signal code: Invalid permissions (2)
+[Ashutoshs-MacBook-Air:93665] Failing at address: 0x10
+[Ashutoshs-MacBook-Air:93667] *** Process received signal ***
+[Ashutoshs-MacBook-Air:93667] Signal: Segmentation fault: 11 (11)
+[Ashutoshs-MacBook-Air:93667] Signal code: Invalid permissions (2)
+[Ashutoshs-MacBook-Air:93667] Failing at address: 0x10
+[Ashutoshs-MacBook-Air:93668] *** Process received signal ***
+[Ashutoshs-MacBook-Air:93668] Signal: Segmentation fault: 11 (11)
+[Ashutoshs-MacBook-Air:93668] Signal code: Invalid permissions (2)
+[Ashutoshs-MacBook-Air:93668] Failing at address: 0x10
+[Ashutoshs-MacBook-Air:93663] *** Process received signal ***
+[Ashutoshs-MacBook-Air:93663] Signal: Segmentation fault: 11 (11)
+[Ashutoshs-MacBook-Air:93663] Signal code: Invalid permissions (2)
+[Ashutoshs-MacBook-Air:93663] Failing at address: 0x10
+[Ashutoshs-MacBook-Air:93664] *** Process received signal ***
+[Ashutoshs-MacBook-Air:93664] Signal: Segmentation fault: 11 (11)
+[Ashutoshs-MacBook-Air:93664] Signal code: Invalid permissions (2)
+[Ashutoshs-MacBook-Air:93664] Failing at address: 0x10
+[Ashutoshs-MacBook-Air:93666] [ 0] [Ashutoshs-MacBook-Air:93667] [ 0] [Ashutoshs-MacBook-Air:93664] [ 0] [Ashutoshs-MacBook-Air:93665] [ 0] [Ashutoshs-MacBook-Air:93663] [ 0] [Ashutoshs-MacBook-Air:93669] [ 0] [Ashutoshs-MacBook-Air:93668] [ 0] 0   libsystem_platform.dylib            0x000000018eb1c624 _sigtramp + 56
+0   libsystem_platform.dylib            0x000000018eb1c624 _sigtramp + 56
+[Ashutoshs-MacBook-Air:93664] [ 1] [Ashutoshs-MacBook-Air:93666] [ 1] 0   libsystem_platform.dylib            0x000000018eb1c624 _sigtramp + 56
+[Ashutoshs-MacBook-Air:93663] [ 1] 0   libsystem_platform.dylib            0x000000018eb1c624 _sigtramp + 56
+[Ashutoshs-MacBook-Air:93667] [ 1] 0   libsystem_platform.dylib            0x000000018eb1c624 _sigtramp + 56
+[Ashutoshs-MacBook-Air:93665] [ 1] 0   libsystem_platform.dylib            0x000000018eb1c624 _sigtramp + 56
+[Ashutoshs-MacBook-Air:93668] [ 1] 0   libsystem_platform.dylib            0x000000018eb1c624 _sigtramp + 56
+[Ashutoshs-MacBook-Air:93669] [ 1] 0   libfftw3.3.dylib                    0x000000010266dc50 fftw_plan_awake + 32
+[Ashutoshs-MacBook-Air:93668] [ 2] 0   libfftw3.3.dylib                    0x0000000100eadc50 fftw_plan_awake + 32
+[Ashutoshs-MacBook-Air:93663] [ 2] 0   libfftw3.3.dylib                    0x0000000104b95c50 fftw_plan_awake + 32
+[Ashutoshs-MacBook-Air:93664] [ 2] 0   libfftw3.3.dylib                    0x0000000100729c50 fftw_plan_awake + 32
+[Ashutoshs-MacBook-Air:93669] [ 2] 0   libfftw3.3.dylib                    0x00000001004a5c50 fftw_plan_awake + 32
+[Ashutoshs-MacBook-Air:93666] [ 2] 0   libfftw3.3.dylib                    0x0000000102b85c50 fftw_plan_awake + 32
+[Ashutoshs-MacBook-Air:93667] [ 2] 0   libfftw3.3.dylib                    0x00000001047d5c50 fftw_plan_awake + 32
+[Ashutoshs-MacBook-Air:93665] [ 2] 0   liblammps_mpi.0.dylib               0x00000001020c4f90 _ZN9LAMMPS_NS5FFT3dD0Ev + 36
+0   liblammps_mpi.0.dylib               0x00000001064d0f90 _ZN9LAMMPS_NS5FFT3dD0Ev + 36
+[Ashutoshs-MacBook-Air:93664] [ 3] 0   liblammps_mpi.0.dylib               0x00000001061ccf90 _ZN9LAMMPS_NS5FFT3dD0Ev + 36
+[Ashutoshs-MacBook-Air:93665] [ 3] [Ashutoshs-MacBook-Air:93666] [ 3] 0   liblammps_mpi.0.dylib               0x00000001020f63b0 _ZN9LAMMPS_NS4PPPM10deallocateEv + 772
+[Ashutoshs-MacBook-Air:93666] 0   liblammps_mpi.0.dylib               0x00000001065023b0 _ZN9LAMMPS_NS4PPPM10deallocateEv + 772
+[Ashutoshs-MacBook-Air:93664] [ 4] 0   liblammps_mpi.0.dylib               0x0000000103e44f90 _ZN9LAMMPS_NS5FFT3dD0Ev + 36
+[Ashutoshs-MacBook-Air:93668] [ 3] 0   liblammps_mpi.0.dylib               0x0000000102330f90 _ZN9LAMMPS_NS5FFT3dD0Ev + 36
+[Ashutoshs-MacBook-Air:93669] [ 3] 0   liblammps_mpi.0.dylib               0x00000001023623b0 _ZN9LAMMPS_NS4PPPM10deallocateEv + 772
+[Ashutoshs-MacBook-Air:93669] [ 4] 0   liblammps_mpi.0.dylib               0x000000010489cf90 _ZN9LAMMPS_NS5FFT3dD0Ev + 36
+[Ashutoshs-MacBook-Air:93667] [ 3] 0   liblammps_mpi.0.dylib               0x00000001048ce3b0 _ZN9LAMMPS_NS4PPPM10deallocateEv + 772
+[Ashutoshs-MacBook-Air:93667] 0   liblammps_mpi.0.dylib               0x0000000102ac8f90 _ZN9LAMMPS_NS5FFT3dD0Ev + 36
+[Ashutoshs-MacBook-Air:93663] [ 3] 0   liblammps_mpi.0.dylib               0x0000000102afa3b0 _ZN9LAMMPS_NS4PPPM10deallocateEv + 772
+[Ashutoshs-MacBook-Air:93663] [ 4] [ 4] [ 4] 0   liblammps_mpi.0.dylib               0x0000000103e763b0 _ZN9LAMMPS_NS4PPPM10deallocateEv + 772
+[Ashutoshs-MacBook-Air:93668] [ 4] 0   liblammps_mpi.0.dylib               0x00000001061fe3b0 _ZN9LAMMPS_NS4PPPM10deallocateEv + 772
+[Ashutoshs-MacBook-Air:93665] [ 4] 0   liblammps_mpi.0.dylib               0x0000000106502988 _ZN9LAMMPS_NS4PPPM4initEv + 1020
+[Ashutoshs-MacBook-Air:93664] [ 5] 0   liblammps_mpi.0.dylib               0x0000000102afa988 _ZN9LAMMPS_NS4PPPM4initEv + 1020
+[Ashutoshs-MacBook-Air:93663] [ 5] 0   liblammps_mpi.0.dylib               0x00000001020f6988 _ZN9LAMMPS_NS4PPPM4initEv + 1020
+[Ashutoshs-MacBook-Air:93666] [ 5] 0   liblammps_mpi.0.dylib               0x0000000102362988 _ZN9LAMMPS_NS4PPPM4initEv + 1020
+[Ashutoshs-MacBook-Air:93669] [ 5] 0   liblammps_mpi.0.dylib               0x00000001048ce988 _ZN9LAMMPS_NS4PPPM4initEv + 1020
+[Ashutoshs-MacBook-Air:93667] [ 5] 0   liblammps_mpi.0.dylib               0x00000001061fe988 _ZN9LAMMPS_NS4PPPM4initEv + 1020
+[Ashutoshs-MacBook-Air:93665] [ 5] 0   liblammps_mpi.0.dylib               0x000000010606bee4 _ZN9LAMMPS_NS5Force4initEv + 72
+[Ashutoshs-MacBook-Air:93664] [ 6] 0   liblammps_mpi.0.dylib               0x0000000102663ee4 _ZN9LAMMPS_NS5Force4initEv + 72
+[Ashutoshs-MacBook-Air:93663] [ 6] 0   liblammps_mpi.0.dylib               0x00000001026ce75c _ZN9LAMMPS_NS6LAMMPS4initEv + 32
+[Ashutoshs-MacBook-Air:93663] [ 7] 0   liblammps_mpi.0.dylib               0x0000000105d67ee4 _ZN9LAMMPS_NS5Force4initEv + 72
+[Ashutoshs-MacBook-Air:93665] [ 6] 0   liblammps_mpi.0.dylib               0x0000000101c5fee4 _ZN9LAMMPS_NS5Force4initEv + 72
+[Ashutoshs-MacBook-Air:93666] [ 6] 0   liblammps_mpi.0.dylib               0x0000000101ecbee4 _ZN9LAMMPS_NS5Force4initEv + 72
+[Ashutoshs-MacBook-Air:93669] [ 6] 0   liblammps_mpi.0.dylib               0x0000000104437ee4 _ZN9LAMMPS_NS5Force4initEv + 72
+[Ashutoshs-MacBook-Air:93667] [ 6] 0   liblammps_mpi.0.dylib               0x00000001060d675c _ZN9LAMMPS_NS6LAMMPS4initEv + 32
+[Ashutoshs-MacBook-Air:93664] [ 7] 0   liblammps_mpi.0.dylib               0x0000000105dd275c _ZN9LAMMPS_NS6LAMMPS4initEv + 32
+[Ashutoshs-MacBook-Air:93665] [ 7] 0   liblammps_mpi.0.dylib               0x0000000103e76988 _ZN9LAMMPS_NS4PPPM4initEv + 1020
+[Ashutoshs-MacBook-Air:93668] [ 5] 0   liblammps_mpi.0.dylib               0x0000000101cca75c _ZN9LAMMPS_NS6LAMMPS4initEv + 32
+[Ashutoshs-MacBook-Air:93666] [ 7] 0   liblammps_mpi.0.dylib               0x00000001044a275c _ZN9LAMMPS_NS6LAMMPS4initEv + 32
+[Ashutoshs-MacBook-Air:93667] [ 7] 0   liblammps_mpi.0.dylib               0x00000001039dfee4 _ZN9LAMMPS_NS5Force4initEv + 72
+[Ashutoshs-MacBook-Air:93668] [ 6] 0   liblammps_mpi.0.dylib               0x0000000101f3675c _ZN9LAMMPS_NS6LAMMPS4initEv + 32
+[Ashutoshs-MacBook-Air:93669] [ 7] 0   liblammps_mpi.0.dylib               0x0000000103a4a75c _ZN9LAMMPS_NS6LAMMPS4initEv + 32
+[Ashutoshs-MacBook-Air:93668] [ 7] 0   liblammps_mpi.0.dylib               0x000000010623a914 _ZN9LAMMPS_NS9WriteData7commandEiPPc + 1132
+[Ashutoshs-MacBook-Air:93664] [ 8] 0   liblammps_mpi.0.dylib               0x0000000101e2e914 _ZN9LAMMPS_NS9WriteData7commandEiPPc + 1132
+[Ashutoshs-MacBook-Air:93666] [ 8] 0   liblammps_mpi.0.dylib               0x0000000104606914 _ZN9LAMMPS_NS9WriteData7commandEiPPc + 1132
+[Ashutoshs-MacBook-Air:93667] [ 8] 0   liblammps_mpi.0.dylib               0x00000001044630f8 _ZN9LAMMPS_NS5Input15execute_commandEv + 3492
+[Ashutoshs-MacBook-Air:93667] [ 9] 0   liblammps_mpi.0.dylib               0x0000000102832914 _ZN9LAMMPS_NS9WriteData7commandEiPPc + 1132
+[Ashutoshs-MacBook-Air:93663] [ 8] 0   liblammps_mpi.0.dylib               0x000000010268f0f8 _ZN9LAMMPS_NS5Input15execute_commandEv + 3492
+[Ashutoshs-MacBook-Air:93663] [ 9] 0   liblammps_mpi.0.dylib               0x0000000105f36914 _ZN9LAMMPS_NS9WriteData7commandEiPPc + 1132
+[Ashutoshs-MacBook-Air:93665] [ 8] 0   liblammps_mpi.0.dylib               0x0000000105d930f8 _ZN9LAMMPS_NS5Input15execute_commandEv + 3492
+[Ashutoshs-MacBook-Air:93665] [ 9] 0   liblammps_mpi.0.dylib               0x0000000105d91cec _ZN9LAMMPS_NS5Input4fileEv + 636
+[Ashutoshs-MacBook-Air:93665] [10] 0   liblammps_mpi.0.dylib               0x0000000103bae914 _ZN9LAMMPS_NS9WriteData7commandEiPPc + 1132
+[Ashutoshs-MacBook-Air:93668] [ 8] 0   liblammps_mpi.0.dylib               0x0000000103a0b0f8 _ZN9LAMMPS_NS5Input15execute_commandEv + 3492
+[Ashutoshs-MacBook-Air:93668] [ 9] 0   liblammps_mpi.0.dylib               0x0000000103a09cec _ZN9LAMMPS_NS5Input4fileEv + 636
+[Ashutoshs-MacBook-Air:93668] [10] 0   liblammps_mpi.0.dylib               0x00000001060970f8 _ZN9LAMMPS_NS5Input15execute_commandEv + 3492
+[Ashutoshs-MacBook-Air:93664] [ 9] 0   liblammps_mpi.0.dylib               0x0000000106095cec _ZN9LAMMPS_NS5Input4fileEv + 636
+[Ashutoshs-MacBook-Air:93664] 0   liblammps_mpi.0.dylib               0x0000000101c8b0f8 _ZN9LAMMPS_NS5Input15execute_commandEv + 3492
+[Ashutoshs-MacBook-Air:93666] [ 9] 0   liblammps_mpi.0.dylib               0x0000000101c89cec _ZN9LAMMPS_NS5Input4fileEv + 636
+[Ashutoshs-MacBook-Air:93666] [10] 0   liblammps_mpi.0.dylib               0x000000010268dcec _ZN9LAMMPS_NS5Input4fileEv + 636
+[Ashutoshs-MacBook-Air:93663] [10] 0   liblammps_mpi.0.dylib               0x000000010209a914 _ZN9LAMMPS_NS9WriteData7commandEiPPc + 1132
+[Ashutoshs-MacBook-Air:93669] [ 8] [10] 0   liblammps_mpi.0.dylib               0x0000000104461cec _ZN9LAMMPS_NS5Input4fileEv + 636
+[Ashutoshs-MacBook-Air:93667] [10] 0   liblammps_mpi.0.dylib               0x0000000101ef70f8 _ZN9LAMMPS_NS5Input15execute_commandEv + 3492
+[Ashutoshs-MacBook-Air:93669] [ 9] 0   lmp_mpi                             0x0000000102079ae8 main + 80
+[Ashutoshs-MacBook-Air:93668] [11] 0   lmp_mpi                             0x000000010448dae8 main + 80
+[Ashutoshs-MacBook-Air:93665] [11] 0   dyld                                0x000000018e742b98 start + 6076
+[Ashutoshs-MacBook-Air:93665] *** End of error message ***
+0   lmp_mpi                             0x0000000100c05ae8 main + 80
+[Ashutoshs-MacBook-Air:93663] [11] 0   dyld                                0x000000018e742b98 start + 6076
+[Ashutoshs-MacBook-Air:93663] *** End of error message ***
+0   dyld                                0x000000018e742b98 start + 6076
+[Ashutoshs-MacBook-Air:93668] *** End of error message ***
+0   lmp_mpi                             0x000000010484dae8 main + 80
+[Ashutoshs-MacBook-Air:93664] [11] 0   dyld                                0x000000018e742b98 start + 6076
+[Ashutoshs-MacBook-Air:93664] *** End of error message ***
+0   lmp_mpi                             0x00000001001fdae8 main + 80
+[Ashutoshs-MacBook-Air:93666] [11] 0   dyld                                0x000000018e742b98 start + 6076
+[Ashutoshs-MacBook-Air:93666] *** End of error message ***
+0   liblammps_mpi.0.dylib               0x0000000101ef5cec _ZN9LAMMPS_NS5Input4fileEv + 636
+[Ashutoshs-MacBook-Air:93669] [10] 0   lmp_mpi                             0x0000000100481ae8 main + 80
+[Ashutoshs-MacBook-Air:93669] [11] 0   dyld                                0x000000018e742b98 start + 6076
+[Ashutoshs-MacBook-Air:93669] *** End of error message ***
+0   lmp_mpi                             0x00000001028ddae8 main + 80
+[Ashutoshs-MacBook-Air:93667] [11] 0   dyld                                0x000000018e742b98 start + 6076
+[Ashutoshs-MacBook-Air:93667] *** End of error message ***
+--------------------------------------------------------------------------
+prterun noticed that process rank 6 with PID 93669 on node Ashutoshs-MacBook-Air exited on
+signal 11 (Segmentation fault: 11).
+--------------------------------------------------------------------------

@@ -1,0 +1,117 @@
+# ============================================================
+# Variant C: TIP4P Air-Water Interface (Validation Run)
+# pppm/tip4p + read_data/replicate + p p p
+# Output: src/test/output/variant_c/
+#
+# Incorporates the user's stable starting structure:
+#   - read_data 1H2O.data + replicate 9 9 9 (avoids lattice overlaps)
+#   - No minimization phase (to prevent pppm/tip4p force spikes)
+#   - change_box to create vacuum gap (z: 0 to 70 A)
+#
+# Adds validation measurements:
+#   - Density profile, surface tension, RDF, MSD, energy stability
+# ============================================================
+
+# ---------- Initialization ----------
+units           real
+atom_style      full
+boundary        p p p
+dimension       3
+
+# ---------- System Setup ----------
+read_data       1H2O.data
+replicate       9 9 9
+
+# ---------- Geometry Modification ----------
+# Expand the z-dimension to create vacuum above the water slab
+change_box      all z final 0 85.0 units box
+
+# ---------- Define Force Fields ----------
+pair_style      lj/cut/tip4p/long 1 2 1 1 0.1546 12.0
+kspace_style    pppm/tip4p 1.0e-4
+
+bond_style      harmonic
+angle_style     harmonic
+
+pair_coeff      1 1 0.18521 3.1589
+pair_coeff      2 2 0.0 0.0
+pair_coeff      1 2 0.0 0.0
+# Fix: Tail corrections changed to 'no' for interfacial validity
+pair_modify     tail no
+
+bond_coeff      1 1000.0 0.9572
+angle_coeff     1 100.0 104.52
+
+group           gH2O type 1 2
+group           oxygen type 1
+
+# ---------- Neighbor List ----------
+neighbor        3.0 bin
+neigh_modify    delay 0 every 1 check yes
+
+# ---------- Velocity Initialization ----------
+velocity        gH2O create 298.15 12345 dist gaussian
+fix             shakeH2O gH2O shake 1.0e-4 100 0 b 1 a 1
+
+# ============================================================
+# EQUILIBRATION & VALIDATION (20 ps total)
+# ============================================================
+fix             nvt_water all nvt temp 298.15 298.15 100.0
+timestep        1.0
+
+variable        massAll equal mass(all)/6.022e23
+variable        volCm3  equal vol*1.0e-24
+variable        density_sys equal v_massAll/v_volCm3
+
+# 1. Density Profile
+compute         chunks gH2O chunk/atom bin/1d z lower 0.5
+fix             density_profile gH2O ave/chunk 50 20 1000 chunks density/mass &
+                file output/variant_c/density_profile.dat
+
+# 2. Surface Tension
+variable        Lz equal lz
+variable        pxx equal pxx
+variable        pyy equal pyy
+variable        pzz equal pzz
+variable        surftens equal 0.5*v_Lz*(v_pzz-0.5*(v_pxx+v_pyy))
+variable        surftens_mNm equal v_surftens*0.101325
+fix             st_avg all ave/time 50 20 1000 v_surftens v_surftens_mNm &
+                file output/variant_c/surface_tension.dat
+
+# 3. Energy stability
+variable        temp_sys equal temp
+variable        pe_sys equal pe
+variable        ke_sys equal ke
+variable        etotal_sys equal etotal
+fix             thermo_avg all ave/time 50 20 1000 &
+                v_temp_sys v_pe_sys v_ke_sys v_etotal_sys &
+                file output/variant_c/energy_stability.dat
+
+# 4. RDF (Radial Distribution Function)
+compute         rdf_calc gH2O rdf 200 1 1 1 2 2 2
+fix             rdf_avg all ave/time 200 50 10000 c_rdf_calc[*] &
+                file output/variant_c/rdf.dat mode vector
+
+# 5. MSD (Mean Squared Displacement)
+compute         msd_water oxygen msd
+fix             msd_avg all ave/time 50 1 50 &
+                c_msd_water[1] c_msd_water[2] c_msd_water[3] c_msd_water[4] &
+                file output/variant_c/msd.dat
+
+dump            traj all atom 5000 output/variant_c/trajectory.lammpstrj
+dump_modify     traj sort id
+
+thermo          5000
+thermo_style    custom step temp pe ke etotal press v_surftens v_surftens_mNm v_density_sys
+thermo_modify   flush yes
+
+# Single continuous run to prevent FFTW plan re-initialization crashes
+run             150000
+
+# ===================== SAVE ==================================
+write_data      output/variant_c/final_config.data pair ij
+
+print "========================================================="
+print " Variant C — Production Run Complete"
+print " Production metrics saved to output/variant_c/"
+print "========================================================="
