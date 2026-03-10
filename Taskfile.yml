@@ -1,0 +1,22 @@
+version: "3"
+
+tasks:
+  install-lammps:
+    desc: "Automates LAMMPS installation across different Operating Systems (Windows, Mac, Linux)."
+    cmds:
+      - python scripts/install_lammps.py
+
+  run:
+    desc: "Run a LAMMPS simulation with a specified number of cores. Usage: task run -- <file.lammps> <cores>"
+    cmds:
+      - mpirun -np {{.CLI_ARGS | splitList " " | last}} lmp_mpi -in {{.CLI_ARGS | splitList " " | first}}
+
+  run-4:
+    desc: "Run a LAMMPS simulation with 4 cores. Usage: task run-4 -- <file.lammps>"
+    cmds:
+      - mpirun -np 4 lmp_mpi -in {{.CLI_ARGS}}
+
+  run-8:
+    desc: "Run a LAMMPS simulation with 8 cores. Usage: task run-8 -- <file.lammps>"
+    cmds:
+      - mpirun -np 8 lmp_mpi -in {{.CLI_ARGS}}
