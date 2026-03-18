@@ -1,0 +1,20 @@
+3. Methodologies
+
+3.1 Automated Generation of PFAS Topologies
+To facilitate the study of various per- and polyfluoroalkyl substances (PFAS), an automated workflow was developed to generate LAMMPS-compatible data files directly from molecular SMILES strings. RDKit was utilized to generate an initial 3D molecular conformer from the input SMILES. Subsequently, the Open Force Field (OpenFF) toolkit was employed to assign comprehensive force field parameters using the Sage force field (`openff-2.0.0.offxml`). This automated pipeline efficiently maps the topological structure to appropriate physical parameters, outputting a fully specified LAMMPS data file containing the atomic coordinates, partial charges, and bonded/non-bonded interaction coefficients for the generated PFAS molecule (e.g., PFOA).
+
+3.2 Baseline System Setup
+All molecular dynamics (MD) simulations were performed using the Large-scale Atomic/Molecular Massively Parallel Simulator (LAMMPS) package. The baseline simulated system consisted of a pure water slab representing an air–water interface. A single TIP4P/2005 water molecule was defined and then replicated 9×9×9 times, resulting in 2187 water molecules. The z-dimension of the periodic simulation box was expanded to 70 Å to create continuous vacuum regions above and below the liquid slab, thereby generating two distinct symmetric air–water interfaces. The total dimensions of the baseline box were approximately 35.28 × 35.28 × 70 Å³.
+
+3.3 PFAS Insertion and Cavity Creation
+To study the behavior of PFAS, the parameterized PFAS molecule was directly inserted into the geometric center of the pre-equilibrated water slab using LAMMPS's `read_data ... add append` functionality. Because the center of the water slab is densely packed, physically forcing the PFAS atoms into this region created severe atomic overlaps.
+
+To safely resolve these extreme steric clashes and generate a stable starting configuration without crashing the simulation, a dynamic cavity creation and healing strategy was implemented:
+1. Cavity Carving: All water molecules located within a 3.0 Å collision radius of any inserted PFAS atom were selectively deleted. The deletion was performed on a per-molecule basis to preserve the correct internal stoichiometry of water. This precisely carved a void in the bulk water that geometrically matched the shape and size of the solute.
+2. Cavity Healing: Even after the gross overlaps were removed, the boundary water molecules remained in unfavorably close contact with the solute. A brief "healing" simulation was executed to physically relax these contacts. During this stage, long-range electrostatic solvers (which inevitably diverge under extreme charge proximity) were temporarily substituted with a short-range Coulombic cutoff (`lj/cut/coul/cut 10.0` Å). The system was integrated at a heavily reduced timestep of 0.1 fs and coupled to a strong Langevin thermostat. This allowed the massive repulsive kinetic energy to safely bleed out of the system.
+After this stabilization phase (lasting approximately 0.5 ps), the cavity had smoothly expanded to accommodate the PFAS molecule.
+
+3.4 Force Field and Simulation Details
+Following the healing phase, production interactions were governed by a hybrid force field combining the TIP4P/2005 model for water and the OpenFF Sage parameters for the PFAS. Non-bonded interactions were modeled via a Lennard-Jones (LJ) potential with a 12 Å cutoff, while long-range electrostatics were properly reinstated using the Particle-Particle Particle-Mesh (PPPM) solver. The high-frequency O–H bonds and H–O–H angles of the water molecules were maintained using the SHAKE algorithm.
+
+The core simulations were conducted in the canonical (NVT) ensemble at 298 K utilizing a Nosé–Hoover thermostat with a relaxation coupling time of 200 fs. The integration time step was reverted to the standard 1 fs. Thermodynamic properties and simulation trajectories were continuously recorded every 1000 timesteps to monitor system stability and support subsequent phase-transfer and structural analyses.

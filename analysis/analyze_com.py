@@ -20,7 +20,7 @@ def analyze_z_movement(com_file, output_img):
         # Water slab is roughly Z=0 to Z=37. Interface is around Z=35-37 and Z=0-2
         plt.axhspan(35, 40, color='lightblue', alpha=0.3, label='Air-Water Interface Region')
         plt.axhspan(-2, 2, color='lightblue', alpha=0.3)
-        plt.axhline(18.5, color='red', linestyle='--', alpha=0.5, label='Initial Position (Center of Bulk)')
+        plt.axhline(32, color='red', linestyle='--', alpha=0.5, label='Initial Position (Center of Bulk)')
         
         plt.xlabel('Time (ps)', fontsize=14)
         plt.ylabel('Z Coordinate (Å)', fontsize=14)

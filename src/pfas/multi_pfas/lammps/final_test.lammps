@@ -1,0 +1,169 @@
+# =============================================================================
+# LAMMPS INPUT SCRIPT: Multi-PFOA at Air-Water Interface (TIP4P/2005)
+# =============================================================================
+# Purpose: Test 8 PFOA molecules in a large water slab (20x20x12)
+# Reference: src/pfas/docs/multi_pfas_plan.md
+# =============================================================================
+
+units real
+atom_style full
+boundary p p p
+
+bond_style      harmonic
+angle_style     harmonic
+dihedral_style  fourier
+improper_style  cvff
+
+# =============================================================================
+# ATOM DEFINITION
+# =============================================================================
+
+# Load single water molecule data file with extra allocations for 8 PFOA molecules
+# PFOA has 6 atom types (3-8), 6 bond types, 4 angle types, 11 dihedral types, 1 improper type.
+read_data ../test/1H2O.data         &
+    extra/atom/types 6              &
+    extra/bond/types 6              &
+    extra/angle/types 4             &
+    extra/dihedral/types 11         &
+    extra/improper/types 1          &
+    extra/bond/per/atom 4           &
+    extra/angle/per/atom 15         &
+    extra/dihedral/per/atom 50      &
+    extra/improper/per/atom 5       &
+    extra/special/per/atom 100
+
+# Replicate to get a large water slab (20 x 20 x 12)
+# Lateral: 20 * 3.106 = ~62.1 Å
+# Thickness: 12 * 3.106 = ~37.3 Å
+replicate 20 20 12
+
+# Extend z to 250 Angstroms for vacuum gap
+change_box all z final 0 250.0 units box
+
+# Automated Insertion of 8 molecules
+read_data src/pfas/data/PFOA_stripped.data add append offset 2 1 1 0 0 shift 57.428 20.215 10.093
+read_data src/pfas/data/PFOA_stripped.data add append offset 2 1 1 0 0 shift 12.761 23.440 14.704
+read_data src/pfas/data/PFOA_stripped.data add append offset 2 1 1 0 0 shift 57.234 50.853 21.228
+read_data src/pfas/data/PFOA_stripped.data add append offset 2 1 1 0 0 shift 53.535 16.030 24.664
+read_data src/pfas/data/PFOA_stripped.data add append offset 2 1 1 0 0 shift 33.656 41.746 17.060
+read_data src/pfas/data/PFOA_stripped.data add append offset 2 1 1 0 0 shift 26.754 1.642 25.972
+read_data src/pfas/data/PFOA_stripped.data add append offset 2 1 1 0 0 shift 19.456 0.759 6.101
+read_data src/pfas/data/PFOA_stripped.data add append offset 2 1 1 0 0 shift 39.451 49.811 9.249
+
+
+# =============================================================================
+# SETTINGS
+# =============================================================================
+
+group water type 1 2
+group pfoa  type 3 4 5 6 7 8
+
+mass 1 15.9994   # O  (TIP4P/2005 water oxygen)
+mass 2  1.0079   # H  (TIP4P/2005 water hydrogen)
+
+# =============================================================================
+# PHASE 1: CAVITY HEALING
+# =============================================================================
+
+pair_style lj/cut/coul/cut 10.0
+
+pair_coeff 1 1 0.18520 3.1589   # O-O  TIP4P/2005
+pair_coeff 2 2 0.0000  0.0000   # H-H  (no LJ)
+pair_coeff 1 2 0.0     0.0      # O-H  cross
+
+include ff_params/pfoa_coeffs.in
+
+bond_coeff  1 0.0 0.9572    # O-H  (SHAKE reference)
+angle_coeff 1 0.0 104.52    # H-O-H (SHAKE reference)
+
+# Delete waters overlapping PFOA to prevent crashes
+delete_atoms overlap 3.0 water pfoa mol yes
+
+# SHAKE for rigid water
+fix constrain water shake 1.0e-4 100 0 b 1 a 1
+
+reset_timestep 0
+timestep 0.1
+
+velocity all create 300.0 12345 dist gaussian loop geom
+
+fix integrate all nve
+fix pull_heat all langevin 300.0 300.0 100.0 12345
+
+thermo 500
+thermo_style custom step temp pe ke etotal press
+
+run 5000
+
+unfix integrate
+unfix pull_heat
+
+# =============================================================================
+# RAMP RUN: stabilizer run
+# =============================================================================
+reset_timestep 0
+timestep 0.5
+fix integrate_ramp all nve
+fix heat_ramp all langevin 300.0 300.0 100.0 54321
+
+thermo 500
+run 2000
+
+unfix integrate_ramp
+unfix heat_ramp
+
+# =============================================================================
+# PHASE 2: PRODUCTION EQUILIBRATION WITH PPPM
+# =============================================================================
+
+pair_style lj/cut/tip4p/long 1 2 1 1 0.1546 12.0
+kspace_style pppm/tip4p 1.0e-4
+
+pair_coeff 1 1 0.18520 3.1589
+pair_coeff 2 2 0.0000  0.0000
+pair_coeff 1 2 0.0     0.0
+
+pair_modify tail no
+pair_modify mix geometric
+
+include ff_params/pfoa_coeffs.in
+
+# =============================================================================
+# PRODUCTION RUN
+# =============================================================================
+
+timestep 1.0
+fix thermostat all nvt temp 300.0 300.0 100.0
+
+# =============================================================================
+# OUTPUT CONFIGURATION
+# =============================================================================
+
+shell mkdir -p output/multi_test
+
+thermo 1000
+thermo_style custom step temp pe ke etotal press density
+
+dump traj all custom 1000 output/multi_test/trajectory.lammpstrj &
+     id type mol x y z ix iy iz
+dump_modify traj sort id
+
+# Track PFOA group center of mass
+compute pfoa_com pfoa com
+fix track_com all ave/time 10 10 500 &
+    c_pfoa_com[1] c_pfoa_com[2] c_pfoa_com[3] &
+    file output/multi_test/com.dat
+
+# Density profile
+compute chunks all chunk/atom bin/1d z lower 1.0 units box
+fix density_profile all ave/chunk 10 10 500 chunks density/mass &
+    file output/multi_test/density_profile.dat
+
+# RDF: PFOA O (type 3) - water H (type 2)
+compute rdf_calc all rdf 100 3 2
+fix track_rdf all ave/time 10 10 500 c_rdf_calc[*] &
+    file output/multi_test/rdf.dat mode vector
+
+run 30000
+
+print "Multi-PFOA Test Run Complete."

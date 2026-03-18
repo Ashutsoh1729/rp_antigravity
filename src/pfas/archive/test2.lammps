@@ -1,0 +1,233 @@
+# =============================================================================
+# LAMMPS INPUT SCRIPT: PFOA at Air-Water Interface (TIP4P/2005)
+# =============================================================================
+# SIMULATION DECISION: Use 'real' units — standard for biomolecular/
+# aqueous systems. Energy in kcal/mol, distance in Angstroms, time in fs.
+units real
+
+# SIMULATION DECISION: 'full' atom style required — atoms carry charge,
+# and PFOA has bonds, angles, dihedrals, impropers.
+atom_style full
+
+# SIMULATION DECISION: p p p boundary.
+# x, y, and z are all periodic.
+# We will create a true vacuum in z simply by making the z-box very large.
+# This avoids the fatal pppm/tip4p vs kspace_modify slab incompatibility.
+boundary p p p
+
+bond_style      harmonic
+angle_style     harmonic
+dihedral_style  fourier
+improper_style  cvff
+
+# =============================================================================
+# ATOM DEFINITION
+# =============================================================================
+
+# SIMULATION DECISION: Load single water molecule data file with extra
+# type/topology allocations reserved for PFOA atoms added later.
+read_data ../test/1H2O.data         &
+    extra/atom/types 6              &
+    extra/bond/types 6              &
+    extra/angle/types 4             &
+    extra/dihedral/types 11         &
+    extra/improper/types 1          &
+    extra/bond/per/atom 4           &
+    extra/angle/per/atom 15         &
+    extra/dihedral/per/atom 30      &
+    extra/improper/per/atom 5       &
+    extra/special/per/atom 50
+
+# SIMULATION DECISION: Replicate 12x12x12 to get a bulk-density water
+# box (~1728 molecules). WARNING about non-periodic dimension is expected
+# and harmless — we are intentionally building a slab geometry.
+replicate 12 12 12
+
+# SIMULATION DECISION: Extend z to 250 Angstroms.
+# Water slab after replication is ~37 A thick (12 * 3.106 A).
+# Vacuum gap = 250 - 37 = ~213 A, safely > 3x slab thickness.
+# Ensures the two air-water interfaces do not interact electrostatically.
+change_box all z final 0 250.0 units box
+
+# SIMULATION DECISION: Insert PFOA below the upper interface of the WATER SLAB.
+# x/y center ~ 18.636 A (half of 37.27 A replicated box).
+# The upper interface is around 37 A. Placing PFOA at z = 32 A puts it slightly below the upper interface.
+read_data data/PFOA_stripped.data add append offset 2 1 1 0 0 shift 18.636 18.636 32.0
+
+# =============================================================================
+# SETTINGS
+# =============================================================================
+
+group water type 1 2
+group pfoa  type 3 4 5 6 7 8
+
+mass 1 15.9994   # O  (TIP4P/2005 water oxygen)
+mass 2  1.0079   # H  (TIP4P/2005 water hydrogen)
+
+# =============================================================================
+# PHASE 1: CAVITY HEALING (short-range only, no kspace)
+# Goal: Relax severe atom overlaps from PFOA insertion.
+# PPPM not used here — overlapping atoms cause extreme charge density
+# spikes that crash the PPPM iterative solver on initialization.
+# =============================================================================
+
+# SIMULATION DECISION: lj/cut/coul/cut for Phase 1 only.
+# Short-range cutoff electrostatics avoid PPPM divergence from overlaps.
+pair_style lj/cut/coul/cut 10.0
+
+pair_coeff 1 1 0.18520 3.1589   # O-O  TIP4P/2005
+pair_coeff 2 2 0.0000  0.0000   # H-H  (no LJ in TIP4P)
+pair_coeff 1 2 0.0     0.0      # O-H  cross (no LJ)
+
+include ff_params/pfoa_coeffs.in
+
+# SIMULATION DECISION: Force constants = 0 for water bonds/angles.
+# TIP4P geometry maintained by SHAKE. Equilibrium values are still
+# required as SHAKE reference geometry.
+bond_coeff  1 0.0 0.9572    # O-H  (SHAKE reference, spring inactive)
+angle_coeff 1 0.0 104.52    # H-O-H (SHAKE reference, spring inactive)
+
+# SIMULATION DECISION: Delete waters overlapping PFOA within 3.0 A.
+# 3.0 A needed because initial PotEng ~421000 kcal/mol indicates severe
+# overlaps. 'mol yes' removes entire water molecules to preserve topology.
+delete_atoms overlap 3.0 water pfoa mol yes
+
+# SIMULATION DECISION: SHAKE on water bond type 1 and angle type 1.
+# Enforces rigid TIP4P/2005 geometry (r_OH=0.9572 A, angle=104.52 deg).
+fix constrain water shake 1.0e-4 100 0 b 1 a 1
+
+reset_timestep 0
+timestep 0.1
+
+velocity all create 300.0 12345 dist gaussian loop geom
+
+# With p p p boundary, atoms ejected by overlap forces during cavity
+# healing might cross the periodic boundary, but that is fine.
+# We do not use walls because walk/lj93 crashes with 'p p p' boundaries.
+fix integrate all nve
+fix pull_heat all langevin 300.0 300.0 100.0 12345
+
+thermo 500
+thermo_style custom step temp pe ke etotal press
+
+# SIMULATION DECISION: 5000 steps x 0.1 fs = 0.5 ps.
+# Just enough to collapse the cavity and remove bad contacts.
+run 5000
+
+unfix integrate
+unfix pull_heat
+# NOTE: fix constrain (SHAKE) intentionally kept active across all phases.
+
+# =============================================================================
+# RAMP RUN: gradual timestep increase 0.1 fs → 0.5 fs
+# from sudden timestep jump. Uses NVE + Langevin (same as Phase 1) because
+# Nose-Hoover NVT needs several steps to initialize its extended variables.
+# =============================================================================
+reset_timestep 0
+timestep 0.5
+fix integrate_ramp all nve
+fix heat_ramp all langevin 300.0 300.0 100.0 54321
+
+thermo 500
+thermo_style custom step temp pe ke etotal press
+
+run 2000
+
+unfix integrate_ramp
+unfix heat_ramp
+
+# =============================================================================
+# PHASE 2: PRODUCTION EQUILIBRATION WITH PPPM
+# SIMULATION DECISION: Define the full force field ONCE here.
+# CRITICAL: Never redefine kspace_style mid-script. Calling kspace_style
+# a second time causes PPPM to deallocate its FFT grid and reinitialize,
+# which triggers a segmentation fault in MPI builds (FFTW3 memory corruption).
+# Therefore, PPPM is only initialized AFTER the ramp run, for the single 
+# production run.
+# =============================================================================
+
+# SIMULATION DECISION: lj/cut/tip4p/long with pppm/tip4p (No slab correction).
+# This perfectly captures the exact TIP4P/2005 massless M-site physics,
+# ensuring the bulk water equilibrates to exactly ~0.998 g/cm3.
+# We do not use kspace_modify slab here (it crashes with pppm/tip4p), but 
+# the 213 A vacuum gap ensures periodic images do not interact.
+pair_style lj/cut/tip4p/long 1 2 1 1 0.1546 12.0
+
+kspace_style pppm/tip4p 1.0e-4
+
+pair_coeff 1 1 0.18520 3.1589   # O-O  TIP4P/2005
+pair_coeff 2 2 0.0000  0.0000   # H-H  (no LJ)
+pair_coeff 1 2 0.0     0.0      # O-H  cross
+
+# SIMULATION DECISION: No tail corrections — invalid for inhomogeneous
+# systems with an interface (assumes uniform bulk density).
+pair_modify tail no
+
+# SIMULATION DECISION: Geometric mixing for PFOA-water cross terms.
+# Consistent with OPLS-AA/GAFF convention for PFOA.
+pair_modify mix geometric
+
+include ff_params/pfoa_coeffs.in
+
+# =============================================================================
+# PRODUCTION RUN
+# =============================================================================
+
+# SIMULATION DECISION: Full production timestep of 1.0 fs.
+# Conservative for PFOA C-F bonds. 2.0 fs possible but 1.0 fs safer.
+timestep 1.0
+
+# SIMULATION DECISION: NVT at 300K using Nose-Hoover thermostat.
+# NVT chosen over NPT — NPT would collapse the vacuum gap in z by
+# trying to equilibrate pressure, destroying the interface geometry.
+fix thermostat all nvt temp 300.0 300.0 100.0
+
+# SIMULATION DECISION: No walls used because p p p boundary is active.
+# The 213 A vacuum gap is large enough that evaporated molecules 
+# won't immediately interact with the other side.
+
+# =============================================================================
+# OUTPUT
+# =============================================================================
+
+thermo 1000
+thermo_style custom step temp pe ke etotal press density
+
+# Store image flags for unwrapped coordinates — needed to correctly
+# track PFOA migration across x/y periodic boundaries.
+dump traj all custom 1000 output/test2/trajectory.lammpstrj &
+     id type mol x y z ix iy iz
+dump_modify traj sort id
+
+# Track PFOA COM in z — key observable is migration from slab center
+# (~18.5 A) to the air-water interface (~0 or ~37 A).
+compute pfoa_com pfoa com
+fix track_com all ave/time 10 10 500 &
+    c_pfoa_com[1] c_pfoa_com[2] c_pfoa_com[3] &
+    file output/test2/com.dat
+
+# z-axis density profile (bin = 1.0 A) — shows water slab edges and
+# any density perturbation from PFOA adsorption at the interface.
+compute chunks all chunk/atom bin/1d z lower 1.0 units box
+fix density_profile all ave/chunk 10 10 500 chunks density/mass &
+    file output/test2/density_profile.dat
+
+# RDF: PFOA oxygen (type 3) — water H (type 2)
+#      PFOA fluorine (type 5) — water H (type 2)
+# Characterizes solvation shell and hydrogen bonding around PFOA.
+compute rdf_calc all rdf 100 3 2 5 2
+fix track_rdf all ave/time 10 10 500 c_rdf_calc[*] &
+    file output/test2/rdf.dat mode vector
+
+# Total energy tracking — confirm equilibration plateau before
+# extending to production run.
+variable tot_eng equal etotal
+fix track_energy all ave/time 10 10 500 v_tot_eng &
+    file output/test2/energy_stability.dat
+
+# SIMULATION DECISION: 50,000 steps x 1.0 fs = 50 ps validation run.
+# Monitor com.dat (PFOA z position) and density_profile.dat (interface
+# location). Extend to 10-100 ns for production free energy studies.
+run 50000
+
+print "Air-Water Interface Run Complete. Check density_profile.dat and com.dat."

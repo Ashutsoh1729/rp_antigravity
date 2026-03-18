@@ -8,15 +8,34 @@ tasks:
 
   run:
     desc: "Run a LAMMPS simulation with a specified number of cores. Usage: task run -- <file.lammps> <cores>"
+    vars:
+      DIR: '{{index (.CLI_ARGS | splitList " ") 0 | dir}}'
+      FILE: '{{index (.CLI_ARGS | splitList " ") 0 | base}}'
+      CORES: '{{index (.CLI_ARGS | splitList " ") 1}}'
     cmds:
-      - mpirun -np {{.CLI_ARGS | splitList " " | last}} lmp_mpi -in {{.CLI_ARGS | splitList " " | first}}
+      - cd {{.DIR}} && mpirun -np {{.CORES}} lmp_mpi -in {{.FILE}}
 
   run-4:
     desc: "Run a LAMMPS simulation with 4 cores. Usage: task run-4 -- <file.lammps>"
+    vars:
+      DIR: '{{.CLI_ARGS | dir}}'
+      FILE: '{{.CLI_ARGS | base}}'
     cmds:
-      - mpirun -np 4 lmp_mpi -in {{.CLI_ARGS}}
+      - cd {{.DIR}} && mpirun -np 4 lmp_mpi -in {{.FILE}}
 
   run-8:
     desc: "Run a LAMMPS simulation with 8 cores. Usage: task run-8 -- <file.lammps>"
+    vars:
+      DIR: '{{.CLI_ARGS | dir}}'
+      FILE: '{{.CLI_ARGS | base}}'
     cmds:
-      - mpirun -np 8 lmp_mpi -in {{.CLI_ARGS}}
+      - cd {{.DIR}} && mpirun -np 8 lmp_mpi -in {{.FILE}}
+
+  prod:
+    desc: "Run the final 20-PFAS upper interface simulation. Usage: task prod -- <cores>"
+    vars:
+      DIR: 'src/pfas/multi_pfas/lammps'
+      FILE: '20pfas_upper.lammps'
+      CORES: '{{.CLI_ARGS}}'
+    cmds:
+      - cd {{.DIR}} && mpirun -np {{.CORES}} lmp_mpi -in {{.FILE}}
